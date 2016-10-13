@@ -1,0 +1,7 @@
+Gson-2.7
+Java-Telegram-Bot-Api-2.1.3
+Okio-1.8.0
+Okhttp-3.4.1
+Retrofit-1.6.0
+twitter4j-core-4.0.5-snapshot
+twitter4j-stream-4.0.5-snapshot

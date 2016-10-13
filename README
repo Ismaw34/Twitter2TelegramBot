@@ -1,0 +1,46 @@
+Easy to install and compile.
+Get the source and libs.
+
+Open the AppConfig.java file and keep it open to add all the things needed-
+
+Make a telegram bot using the @BotFather
+Get the key and put it on the AppConfig file on where the TELEGRAM_TOKEN variable.
+Get your userID number, With Plus Messenger click on the cloud and open your user profile, there you have it.
+https://play.google.com/store/apps/details?id=org.telegram.plus
+If you dont want to install it, for whatever reason, just compile it now and send a /fetch command.
+You'll see your user ID on the console.
+Put your id on the AppConfig file where the TELEGRAM_SELF_ID variable.
+
+Make a Twitter App for yourself.
+Get the ConsumerKey and put it on the AppConfig file where the TWITTER_CONSUMER_KEY variable.
+Get the ConsumerPrivateKey and put it on the AppConfig file where the TWITTER_CONSUMER_PRIVATE variable.
+Get the AccessTokenKey and put it on the AppConfig file where the TWITTER_ACCESS_TOKEN variable.
+Get the AccessTokenPrivateKey and put it on the AppConfig file where the TWITTER_ACCESS_TOKEN_PRIVATE variable.
+Set the TWITTER_NICK with your Nickname without the @.
+
+The direct message thingy does not work.
+If you want to help to implement new features, turn on the DEBUG on the AppConfig file and you can send a new issue with the StackTrace on your Telegram chat.
+You can customize the icons that appear on the Retweet and Like.
+
+Keep in mind is currently on Development and new features may come.
+
+The current features are:
+Fetch in realtime new tweets on your timeline.
+Also you can manuallty fetch your tweets if you disable the Twitter4jStream service. (/fetch command)
+Post a tweet directly from your Telegram chat. (/twitter and the text)
+You can retweet and like (Favorite) tweets directly from your chat. (Currently it cannot be undone)
+You can reply to tweets using the telegram reply function. (Set the message to reply and then post a new tweet using the /twitter command)
+
+Additionally it has /help command to get all the commands and the /father command to directly copy and paste to the BotFather's /setcommands.
+
+NOTE: Some strings are in Spanish, future version will feature all the strings in English and maybe language selector.
+
+HOW2UPGRADE:
+Just redownload the source and apply the AppConfig strings needed and recompile.
+
+How to compile:
+Get the sources and all the libs, put the libs on the Java library build path.
+Compile using the Java8JDK.
+Use the TelegramInstance class as the MainClass.
+
+Anything you need, open a Issue or just tweetme on @Ismaw34.
