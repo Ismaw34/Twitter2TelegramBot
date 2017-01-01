@@ -14,9 +14,11 @@ Put your id on the AppConfig file where the TELEGRAM_SELF_ID variable.
 Make a Twitter App for yourself.
 Get the ConsumerKey and put it on the AppConfig file where the TWITTER_CONSUMER_KEY variable.
 Get the ConsumerPrivateKey and put it on the AppConfig file where the TWITTER_CONSUMER_PRIVATE variable.
+To authorize the Twitter app, launch the AppAuth class (as main class), follow the instructions and save the tokens generated.
 Get the AccessTokenKey and put it on the AppConfig file where the TWITTER_ACCESS_TOKEN variable.
 Get the AccessTokenPrivateKey and put it on the AppConfig file where the TWITTER_ACCESS_TOKEN_PRIVATE variable.
 Set the TWITTER_NICK with your Nickname without the @.
+If you are following some kind of automated group, like me, a streaming community, add the names w/o @ at the array TWITTER_IGNORE.
 
 The direct message thingy does not work.
 If you want to help to implement new features, turn on the DEBUG on the AppConfig file and you can send a new issue with the StackTrace on your Telegram chat.
@@ -28,12 +30,14 @@ The current features are:
 Fetch in realtime new tweets on your timeline.
 Also you can manuallty fetch your tweets if you disable the Twitter4jStream service. (/fetch command)
 Post a tweet directly from your Telegram chat. (/twitter and the text)
-You can retweet and like (Favorite) tweets directly from your chat. (Currently it cannot be undone)
+You can retweet and like (Favorite) tweets directly from your chat. (It can be undone)
 You can reply to tweets using the telegram reply function. (Set the message to reply and then post a new tweet using the /twitter command)
+If you recieve a DM, you can reply using the /dm command, also you can start a new DM using the /dm command.
+If a tweet starts with RT, it won't appear, I'm following a train status twitter, and instead of ReTweeting is tweeting with a lead RT, i don't want to flood the chat.
 
 Additionally it has /help command to get all the commands and the /father command to directly copy and paste to the BotFather's /setcommands.
 
-NOTE: Some strings are in Spanish, future version will feature all the strings in English and maybe language selector.
+NOTE: Some strings are in Spanish, future version will feature all the strings in English and maybe language selector. << I'm working on it.
 
 HOW2UPGRADE:
 Just redownload the source and apply the AppConfig strings needed and recompile.
@@ -44,3 +48,11 @@ Compile using the Java8JDK.
 Use the TelegramInstance class as the MainClass.
 
 Anything you need, open a Issue or just tweetme on @Ismaw34.
+
+The future of the app:
+I want to make a command to report and block for a twitter spam account.
+Make the AppConfig as an xml file and just compile it as release to use it.
+Fetch new messages when the twitter api fails, and not lose potential tweets.
+Add new commands to make it some kind of useful app.
+Make a lang selector of some kind, remove all the personal appearances with the coresponding variables.
+Make some cleaner code and remove duplicated code.

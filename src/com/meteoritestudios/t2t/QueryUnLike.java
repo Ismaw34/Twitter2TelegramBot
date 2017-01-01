@@ -13,10 +13,10 @@ import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.request.AnswerCallbackQuery;
 import com.pengrad.telegrambot.request.EditMessageText;
 
-public class QueryLike extends QueryBase {
+public class QueryUnLike extends QueryBase {
 
-	public QueryLike() {
-		super("like");
+	public QueryUnLike() {
+		super("unlike");
 	}
 
 	@Override
@@ -24,12 +24,11 @@ public class QueryLike extends QueryBase {
 		TelegramBot _bot = TelegramInstance.getBot();
 		Twitter _ti = TwitterInstance.getTwitterInstance();
 		try {
-			long twitter_status_id = Long.parseLong(update.callbackQuery().data()
-					.substring(key.length()));
-			_ti.createFavorite(
-					twitter_status_id);
+			long twitter_status_id = Long.parseLong(update.callbackQuery()
+					.data().substring(key.length()));
+			_ti.destroyFavorite(twitter_status_id);
 			_bot.execute(new AnswerCallbackQuery(update.callbackQuery().id())
-					.text(AppConfig.TWITTER_ICONS[AppConfig.TWITTER_LIKE]
+					.text(AppConfig.TWITTER_ICONS[AppConfig.TWITTER_UNLIKE]
 							+ " OK"));
 			Status status = _ti.showStatus(twitter_status_id);
 			ArrayList<InlineKeyboardButton> al_ikb = new ArrayList<InlineKeyboardButton>();
@@ -54,8 +53,9 @@ public class QueryLike extends QueryBase {
 			InlineKeyboardMarkup markup = new InlineKeyboardMarkup(
 					al_ikb.toArray(new InlineKeyboardButton[al_ikb.size()]));
 			EditMessageText editMessageText = new EditMessageText(
-					AppConfig.TELEGRAM_SELF_ID, update.callbackQuery().message().messageId(),
-					update.callbackQuery().message().text()).replyMarkup(markup);
+					AppConfig.TELEGRAM_SELF_ID, update.callbackQuery()
+							.message().messageId(), update.callbackQuery()
+							.message().text()).replyMarkup(markup);
 			_bot.execute(editMessageText);
 		} catch (NumberFormatException e) {
 		} catch (TwitterException e) {

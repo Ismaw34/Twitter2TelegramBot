@@ -72,7 +72,7 @@ public class TwitterInstance extends ComsBase {
 		}
 		TwitterFactory tf = new TwitterFactory(conf);
 		twitter = tf.getInstance();
-		//this.getLastestsTwits();
+		this.getLastestsTwits();
 		TwitterStreamFactory tsf = new TwitterStreamFactory(conf);
 		twitter_s = tsf.getInstance();
 		twitter_s.addListener(new EventedTwitter());
@@ -87,12 +87,24 @@ public class TwitterInstance extends ComsBase {
 		ti.execute(new SendChatAction(AppConfig.TELEGRAM_SELF_ID,
 				ChatAction.typing.name()));
 		ArrayList<InlineKeyboardButton> al_ikb = new ArrayList<InlineKeyboardButton>();
-		al_ikb.add(new InlineKeyboardButton(
-				AppConfig.TWITTER_ICONS[AppConfig.TWITTER_RETWEET])
-				.callbackData("retweet" + sta.getId()));
-		al_ikb.add(new InlineKeyboardButton(
-				AppConfig.TWITTER_ICONS[AppConfig.TWITTER_LIKE])
-				.callbackData("like" + sta.getId()));
+		if (sta.isRetweetedByMe()) {
+			al_ikb.add(new InlineKeyboardButton(
+					AppConfig.TWITTER_ICONS[AppConfig.TWITTER_UNRETWEET])
+					.callbackData("unretweet" + sta.getId()));
+		} else {
+			al_ikb.add(new InlineKeyboardButton(
+					AppConfig.TWITTER_ICONS[AppConfig.TWITTER_RETWEET])
+					.callbackData("retweet" + sta.getId()));
+		}
+		if (sta.isFavorited()) {
+			al_ikb.add(new InlineKeyboardButton(
+					AppConfig.TWITTER_ICONS[AppConfig.TWITTER_UNLIKE])
+					.callbackData("unlike" + sta.getId()));
+		} else {
+			al_ikb.add(new InlineKeyboardButton(
+					AppConfig.TWITTER_ICONS[AppConfig.TWITTER_LIKE])
+					.callbackData("like" + sta.getId()));
+		}
 		InlineKeyboardMarkup markup = new InlineKeyboardMarkup(
 				al_ikb.toArray(new InlineKeyboardButton[al_ikb.size()]));
 		ti.execute(new SendMessage(AppConfig.TELEGRAM_SELF_ID,
@@ -112,8 +124,12 @@ public class TwitterInstance extends ComsBase {
 				if (sta.getId() > lastID) {
 					lastID = sta.getId();
 				}
-				if (sta.getUser().getScreenName().toLowerCase()
-						.equalsIgnoreCase(AppConfig.TWITTER_NICK)) {
+				if (sta.getUser().getScreenName()
+						.equalsIgnoreCase(AppConfig.TWITTER_NICK)
+						|| this.isIgnored(sta.getUser().getScreenName())) {
+					continue;
+				}
+				if (sta.getText().startsWith("RT")) {
 					continue;
 				}
 				this.postStatusToTelegram(sta);
@@ -178,11 +194,19 @@ public class TwitterInstance extends ComsBase {
 			if (sta.getId() > lastID) {
 				lastID = sta.getId();
 			}
-			if (sta.getUser().getScreenName().toLowerCase()
-					.equalsIgnoreCase(AppConfig.TWITTER_NICK)) {
+			if (sta.getUser().getScreenName()
+					.equalsIgnoreCase(AppConfig.TWITTER_NICK)
+					|| isIgnored(sta.getUser().getScreenName())) {
 				return;
 			}
-			postStatusToTelegram(sta);
+			if (sta.getText().startsWith("RT")) {
+				return;
+			}
+			if (sta.isRetweet()) {
+				this.onRetweet(sta);
+			} else {
+				postStatusToTelegram(sta);
+			}
 			PrintWriter pw = null;
 			try {
 				pw = new PrintWriter(twitter_last_id);
@@ -192,6 +216,43 @@ public class TwitterInstance extends ComsBase {
 			try {
 				pw.close();
 			} catch (Exception e) {
+			}
+		}
+
+		public void onRetweet(Status sta) {
+			Status orig = sta.getRetweetedStatus();
+			if (orig.getUser().getScreenName().equals(AppConfig.TWITTER_NICK)) {
+				// Someone retweeted your tweet
+				ti.execute(new SendChatAction(AppConfig.TELEGRAM_SELF_ID,
+						ChatAction.typing.name()));
+				ti.execute(new SendMessage(AppConfig.TELEGRAM_SELF_ID,
+						"The user: @" + sta.getUser().getScreenName()
+								+ " has retweeted your tweet:\n"
+								+ "https://twitter.com/"
+								+ orig.getUser().getScreenName() + "/status/"
+								+ orig.getId()));
+			} else if (sta.getUser().getScreenName()
+					.equals(orig.getUser().getScreenName())) {
+				// Someone retweeted itself
+				// Ignore?
+			} else {
+				ti.execute(new SendChatAction(AppConfig.TELEGRAM_SELF_ID,
+						ChatAction.typing.name()));
+				ArrayList<InlineKeyboardButton> al_ikb = new ArrayList<InlineKeyboardButton>();
+				al_ikb.add(new InlineKeyboardButton(
+						AppConfig.TWITTER_ICONS[AppConfig.TWITTER_RETWEET])
+						.callbackData("retweet" + orig.getId()));
+				al_ikb.add(new InlineKeyboardButton(
+						AppConfig.TWITTER_ICONS[AppConfig.TWITTER_LIKE])
+						.callbackData("like" + orig.getId()));
+				InlineKeyboardMarkup markup = new InlineKeyboardMarkup(
+						al_ikb.toArray(new InlineKeyboardButton[al_ikb.size()]));
+				ti.execute(new SendMessage(AppConfig.TELEGRAM_SELF_ID,
+						"The user: @" + sta.getUser().getScreenName()
+								+ " has retweeted the tweet:\n"
+								+ "https://twitter.com/"
+								+ orig.getUser().getScreenName() + "/status/"
+								+ orig.getId()).replyMarkup(markup));
 			}
 		}
 
@@ -207,11 +268,24 @@ public class TwitterInstance extends ComsBase {
 
 		@Override
 		public void onException(Exception e) {
-			if (AppConfig.APP_DEBUG) {
-				ti.execute(new SendChatAction(AppConfig.TELEGRAM_SELF_ID,
-						ChatAction.typing.name()));
-				ti.execute(new SendMessage(AppConfig.TELEGRAM_SELF_ID,
-						"onException\n\n" + e.toString()));
+			if (e instanceof TwitterException) {
+				if (AppConfig.APP_DEBUG) {
+					TwitterException twe = (TwitterException) e;
+					if (twe.getMessage() != null) {
+						ti.execute(new SendChatAction(
+								AppConfig.TELEGRAM_SELF_ID, ChatAction.typing
+										.name()));
+						ti.execute(new SendMessage(AppConfig.TELEGRAM_SELF_ID,
+								"onTwitterException\n\n" + e.getMessage()));
+					}
+				}
+			} else {
+				if (AppConfig.APP_DEBUG) {
+					ti.execute(new SendChatAction(AppConfig.TELEGRAM_SELF_ID,
+							ChatAction.typing.name()));
+					ti.execute(new SendMessage(AppConfig.TELEGRAM_SELF_ID,
+							"onException\n\n" + e.toString()));
+				}
 			}
 		}
 
@@ -248,12 +322,12 @@ public class TwitterInstance extends ComsBase {
 			 * ChatAction.typing.name())); ti.execute(new
 			 * SendMessage(AppConfig.TELEGRAM_SELF_ID, "onFavorite\n\n" +
 			 * paramUser1.toString() + "\n\n" + paramUser2.toString() + "\n\n" +
-			 * paramStatus.toString())); if
-			 * (paramUser1.getScreenName().toLowerCase()
+			 * paramStatus.toString())); if (paramUser1.getScreenName()
 			 * .equalsIgnoreCase(AppConfig.TWITTER_NICK)) { return; }
 			 */
-			if (paramUser1.getScreenName().toLowerCase()
-					.equalsIgnoreCase(AppConfig.TWITTER_NICK)) {
+			if (paramUser1.getScreenName().equalsIgnoreCase(
+					AppConfig.TWITTER_NICK)
+					|| isIgnored(sta.getUser().getScreenName())) {
 				return;
 			}
 			ti.execute(new SendChatAction(AppConfig.TELEGRAM_SELF_ID,
@@ -267,14 +341,17 @@ public class TwitterInstance extends ComsBase {
 		}
 
 		@Override
-		public void onUnfavorite(User paramUser1, User paramUser2,
-				Status paramStatus) {
+		public void onUnfavorite(User paramUser1, User paramUser2, Status sta) {
+			if (paramUser1.getScreenName().equalsIgnoreCase(
+					AppConfig.TWITTER_NICK)
+					|| isIgnored(sta.getUser().getScreenName())) {
+				return;
+			}
 			ti.execute(new SendChatAction(AppConfig.TELEGRAM_SELF_ID,
 					ChatAction.typing.name()));
 			ti.execute(new SendMessage(AppConfig.TELEGRAM_SELF_ID,
 					"onUnfavorite\n\n" + paramUser1.toString() + "\n\n"
-							+ paramUser2.toString() + "\n\n"
-							+ paramStatus.toString()));
+							+ paramUser2.toString() + "\n\n" + sta.toString()));
 		}
 
 		@Override
@@ -286,8 +363,9 @@ public class TwitterInstance extends ComsBase {
 			 * SendMessage(AppConfig.TELEGRAM_SELF_ID, "onFollow\n" +
 			 * paramUser1.toString() + "\n" + paramUser2.toString()));
 			 */
-			if (paramUser1.getScreenName().toLowerCase()
-					.equalsIgnoreCase(AppConfig.TWITTER_NICK)) {
+			if (paramUser1.getScreenName().equalsIgnoreCase(
+					AppConfig.TWITTER_NICK)
+					|| isIgnored(paramUser1.getScreenName())) {
 				return;
 			}
 			ti.execute(new SendChatAction(AppConfig.TELEGRAM_SELF_ID,
@@ -299,6 +377,10 @@ public class TwitterInstance extends ComsBase {
 
 		@Override
 		public void onUnfollow(User paramUser1, User paramUser2) {
+			if (paramUser1.getScreenName().equalsIgnoreCase(
+					AppConfig.TWITTER_NICK)) {
+				return;
+			}
 			if (AppConfig.APP_DEBUG) {
 				ti.execute(new SendChatAction(AppConfig.TELEGRAM_SELF_ID,
 						ChatAction.typing.name()));
@@ -310,13 +392,16 @@ public class TwitterInstance extends ComsBase {
 
 		@Override
 		public void onDirectMessage(DirectMessage paramDirectMessage) {
-			if (AppConfig.APP_DEBUG) {
-				System.out.println(paramDirectMessage);
-				ti.execute(new SendChatAction(AppConfig.TELEGRAM_SELF_ID,
-						ChatAction.typing.name()));
-				ti.execute(new SendMessage(AppConfig.TELEGRAM_SELF_ID,
-						"onDirectMessage\n\n" + paramDirectMessage.toString()));
+			if (paramDirectMessage.getSenderScreenName().equals(
+					AppConfig.TWITTER_NICK)) {
+				return;
 			}
+			System.out.println(paramDirectMessage);
+			ti.execute(new SendChatAction(AppConfig.TELEGRAM_SELF_ID,
+					ChatAction.typing.name()));
+			ti.execute(new SendMessage(AppConfig.TELEGRAM_SELF_ID, "DM from: "
+					+ paramDirectMessage.getSenderScreenName() + "\n"
+					+ paramDirectMessage.getText()));
 		}
 
 		@Override
@@ -507,6 +592,15 @@ public class TwitterInstance extends ComsBase {
 						"Nothing to fetch"));
 			}
 		}
+	}
+
+	public boolean isIgnored(String user) {
+		for (String ign : AppConfig.TWITTER_IGNORE) {
+			if (ign.equals(user)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override

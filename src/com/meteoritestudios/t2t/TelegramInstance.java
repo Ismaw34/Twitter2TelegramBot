@@ -27,8 +27,8 @@ public class TelegramInstance extends TimerTask {
 
 	TwitterInstance twitter_instance;
 
-	ComsBase[] coms = new ComsBase[5];
-	QueryBase[] querys = new QueryBase[2];
+	ComsBase[] coms = new ComsBase[7];
+	QueryBase[] querys = new QueryBase[4];
 
 	public TelegramInstance() throws Throwable {
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
@@ -45,10 +45,14 @@ public class TelegramInstance extends TimerTask {
 		coms[2] = new ComsHelp();
 		coms[3] = new ComsFather();
 		coms[4] = new ComsDM();
+		coms[5] = new ComsFollow();
+		coms[6] = new ComsUnfollow();
 		((ComsHelp) coms[2]).setCommands(coms);
 		((ComsFather) coms[3]).setCommands(coms);
 		querys[0] = new QueryRetweet();
 		querys[1] = new QueryLike();
+		querys[2] = new QueryUnRetweet();
+		querys[3] = new QueryUnLike();
 		timer = new Timer("TimerEvent", true);
 		timer.schedule(this, 0, 1000);
 		while (true) {
